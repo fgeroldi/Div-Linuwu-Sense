@@ -1,0 +1,15 @@
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.order
+*.symvers
+.tmp_versions/
+.tmp/
+.*.cmd
+.module-common.o
+rpmbuild/
+*.tar.gz
+*.rpm
+.rpmmacros

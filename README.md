@@ -14,6 +14,17 @@ For Arch Linux:
 ```bash
 sudo pacman -S linux-headers
 ```
+
+For Fedora / RHEL (Akmod):
+```bash
+sudo dnf install akmods kernel-devel rpm-build kmodtool
+make akmod
+sudo dnf install rpmbuild/RPMS/noarch/linuwu_sense-common-*.rpm rpmbuild/RPMS/x86_64/akmod-linuwu_sense-*.rpm
+sudo akmods --force
+sudo modprobe linuwu_sense
+```
+*(Alternatively, run `make install-akmod` to build, install, and trigger akmods in one step)*
+
 Next, clone the repository and build the module:
 ```bash
 git clone https://github.com/0x7375646F/Linuwu-Sense.git

@@ -7,12 +7,58 @@ PWD   := $(shell pwd)
 MDIR  := /lib/modules/$(KVER)/kernel/drivers/platform/x86
 MODNAME := linuwu_sense
 REAL_USER := $(shell echo $${SUDO_USER:-$$(whoami)})
+VERSION ?= 1.0
+RELEASE ?= 2
+RPMBUILD_DIR ?= $(PWD)/rpmbuild
+
+.PHONY: all clean clean-rpm tarball srpm akmod kmod install uninstall install-akmod
 
 all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	@rm -f src/$(MODNAME).ko
+
+clean-rpm:
+	rm -rf $(RPMBUILD_DIR) *.tar.gz *.rpm
+
+tarball:
+	@mkdir -p $(RPMBUILD_DIR)/SOURCES
+	@rm -rf $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)
+	@mkdir -p $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)/src
+	@cp -a Makefile LICENSE README.md linuwu_sense.service $(MODNAME).spec $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)/
+	@cp -a $(MODNAME)-tmpfiles.conf $(MODNAME)-modules-load.conf $(MODNAME)-modprobe-blacklist.conf $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)/
+	@cp -a src/linuwu_sense.c $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)/src/
+	@tar -czf $(RPMBUILD_DIR)/SOURCES/$(MODNAME)-$(VERSION).tar.gz -C $(RPMBUILD_DIR) $(MODNAME)-$(VERSION)
+	@rm -rf $(RPMBUILD_DIR)/$(MODNAME)-$(VERSION)
+	@cp -a $(MODNAME)-tmpfiles.conf $(MODNAME)-modules-load.conf $(MODNAME)-modprobe-blacklist.conf $(RPMBUILD_DIR)/SOURCES/
+
+srpm: tarball
+	@mkdir -p $(RPMBUILD_DIR)/{SPECS,SRPMS,RPMS,BUILD,BUILDROOT,tmp}
+	@echo "%_topdir $(RPMBUILD_DIR)" > $(PWD)/.rpmmacros
+	@echo "%_tmppath $(RPMBUILD_DIR)/tmp" >> $(PWD)/.rpmmacros
+	@cp -a $(MODNAME).spec $(RPMBUILD_DIR)/SPECS/
+	HOME=$(PWD) rpmbuild --define "buildforkernels akmod" -bs $(RPMBUILD_DIR)/SPECS/$(MODNAME).spec
+	@echo "SRPM created at $(RPMBUILD_DIR)/SRPMS/"
+
+akmod: srpm
+	HOME=$(PWD) rpmbuild --define "buildforkernels akmod" -ba $(RPMBUILD_DIR)/SPECS/$(MODNAME).spec
+	@echo "Akmod and Common RPMs created at $(RPMBUILD_DIR)/RPMS/"
+
+kmod: srpm
+	HOME=$(PWD) rpmbuild --define "kernels $(KVER)" -ba $(RPMBUILD_DIR)/SPECS/$(MODNAME).spec
+	@echo "Kmod RPM for $(KVER) created at $(RPMBUILD_DIR)/RPMS/"
+
+install-akmod: akmod
+	@echo "Installing akmod package..."
+	sudo dnf install -y --allowerasing $(RPMBUILD_DIR)/RPMS/noarch/$(MODNAME)-common-*.rpm $(RPMBUILD_DIR)/RPMS/x86_64/akmod-$(MODNAME)-*.rpm || \
+	sudo dnf reinstall -y $(RPMBUILD_DIR)/RPMS/noarch/$(MODNAME)-common-*.rpm $(RPMBUILD_DIR)/RPMS/x86_64/akmod-$(MODNAME)-*.rpm
+	@echo "Building module with akmods..."
+	sudo akmods --force
+	@echo "Reloading module..."
+	sudo modprobe -r $(MODNAME) 2>/dev/null || true
+	sudo modprobe $(MODNAME)
 
 uninstall:
 	@sudo rm -f /etc/modules-load.d/$(MODNAME).conf
@@ -80,4 +126,3 @@ install: all
 		echo "Warning: Could not detect predator_sense or nitro_sense in sysfs."; \
 	fi
 	@echo "Module $(MODNAME) installed and configured to load at boot."
-

@@ -48,6 +48,7 @@
 #include <linux/bitfield.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,12,0)
@@ -657,6 +658,15 @@ static const struct dmi_system_id acer_quirks[] __initconst = {
             DMI_MATCH(DMI_PRODUCT_NAME, "Nitro AN16-41"),
         },
         .driver_data = &quirk_acer_nitro_an16_41,
+    },
+    {
+        .callback = dmi_matched,
+        .ident = "Acer Nitro ANV16-41",
+        .matches = {
+            DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
+            DMI_MATCH(DMI_PRODUCT_NAME, "Nitro ANV16-41"),
+        },
+        .driver_data = &quirk_acer_nitro_anv16_41,
     },
     {
          .callback = dmi_matched,
@@ -3611,15 +3621,11 @@ static ssize_t predator_fan_speed_store(struct device *dev,
     char *token;
     char *input_ptr = input;
     size_t len = min(count, sizeof(input) - 1);
-    strncpy(input, buf, len);
-
-    if (input[len - 1] == '\n')
+    memcpy(input, buf, len);
+    input[len] = '\0';
+    if (len > 0 && input[len - 1] == '\n')
     {
         input[len - 1] = '\0';
-    }
-    else
-    {
-        input[len] = '\0';
     }
 
     token = strsep(&input_ptr, ",");
@@ -4113,15 +4119,11 @@ static ssize_t four_zoned_rgb_kb_store(struct device *dev, struct device_attribu
     char *input_ptr = input_buf;
     size_t len = min(count, sizeof(input_buf) - 1);
 
-    strncpy(input_buf, buf, len);
-
-    if (input_buf[len - 1] == '\n')
+    memcpy(input_buf, buf, len);
+    input_buf[len] = '\0';
+    if (len > 0 && input_buf[len - 1] == '\n')
     {
         input_buf[len - 1] = '\0';
-    }
-    else
-    {
-        input_buf[len] = '\0';
     }
 
     token = strsep(&input_ptr, ",");
@@ -4306,14 +4308,11 @@ static ssize_t per_zoned_rgb_kb_store(struct device *dev, struct device_attribut
     struct per_zone_color colors;
     char *input_ptr = str_buf;
     len = min(count, sizeof(str_buf) - 1);
-    strncpy(str_buf, buf, len);
-    if (str_buf[len - 1] == '\n')
+    memcpy(str_buf, buf, len);
+    str_buf[len] = '\0';
+    if (len > 0 && str_buf[len - 1] == '\n')
     {
         str_buf[len - 1] = '\0';
-    }
-    else
-    {
-        str_buf[len] = '\0';
     }
 
     acpi_status status;
