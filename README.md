@@ -25,6 +25,15 @@ sudo modprobe linuwu_sense
 ```
 *(Alternatively, run `make install-akmod` to build, install, and trigger akmods in one step)*
 
+For Ubuntu / Debian (DKMS .deb):
+```bash
+sudo apt update
+sudo apt install dkms build-essential linux-headers-generic
+make deb
+sudo apt install ./debbuild/linuwu-sense-dkms_1.0-2_all.deb
+```
+*(Alternatively, run `make install-deb` to build and install in one step)*
+
 Next, clone the repository and build the module:
 ```bash
 git clone https://github.com/0x7375646F/Linuwu-Sense.git

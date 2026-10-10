@@ -1,0 +1,7 @@
+src/linuwu_sense.c usr/src/linuwu-sense-1.0/src/
+dkms.conf usr/src/linuwu-sense-1.0/
+Kbuild usr/src/linuwu-sense-1.0/
+linuwu_sense-tmpfiles.conf usr/lib/tmpfiles.d/linuwu_sense.conf
+linuwu_sense-modules-load.conf etc/modules-load.d/linuwu_sense.conf
+linuwu_sense-modprobe-blacklist.conf etc/modprobe.d/linuwu_sense-blacklist.conf
+linuwu_sense.service usr/lib/systemd/system/linuwu_sense.service

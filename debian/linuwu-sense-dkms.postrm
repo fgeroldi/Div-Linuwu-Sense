@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        rm -rf /usr/src/linuwu-sense-1.0 2>/dev/null || true
+        ;;
+    remove|purge)
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl --system daemon-reload >/dev/null 2>&1 || true
+        fi
+        if command -v depmod >/dev/null 2>&1; then
+            depmod -a >/dev/null 2>&1 || true
+        fi
+        ;;
+esac
+
+exit 0

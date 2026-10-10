@@ -1,0 +1,19 @@
+Source: linuwu-sense
+Section: kernel
+Priority: optional
+Maintainer: Felipe Geroldi <142124821+fgeroldi@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), dkms
+Standards-Version: 4.6.2
+Homepage: https://github.com/fgeroldi/Div-Linuwu-Sense
+
+Package: linuwu-sense-dkms
+Architecture: all
+Depends: dkms (>= 2.1.0.0), udev, ${misc:Depends}
+Recommends: linux-headers-generic | linux-headers
+Provides: linuwu-sense, linuwu_sense, linuwu_sense-dkms
+Description: Acer RGB Keyboard Backlight and Turbo Mode kernel module (DKMS)
+ Unofficial Linux Kernel Module for Acer Gaming RGB Keyboard Backlight
+ and Turbo Mode (Acer Predator / Nitro).
+ .
+ This package installs the driver source using DKMS so it is automatically
+ rebuilt for every installed kernel.

@@ -1,0 +1,57 @@
+#!/bin/sh
+set -e
+
+NAME="linuwu-sense"
+MODULE="linuwu_sense"
+VERSION="1.0"
+PACKAGE_NAME="linuwu-sense-dkms"
+
+case "$1" in
+    configure)
+        # Ensure group linuwu_sense exists
+        if ! getent group linuwu_sense >/dev/null 2>&1; then
+            groupadd -r linuwu_sense >/dev/null 2>&1 || true
+        fi
+
+        # If installed via sudo, add invoking user to the group
+        if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+            usermod -aG linuwu_sense "$SUDO_USER" >/dev/null 2>&1 || true
+        fi
+
+        # Register and build module with DKMS
+        dkms_built=0
+        for DKMS_POSTINST in /usr/lib/dkms/common.postinst /usr/share/$PACKAGE_NAME/postinst; do
+            if [ -x "$DKMS_POSTINST" ]; then
+                "$DKMS_POSTINST" "$NAME" "$VERSION" "/usr/share/$PACKAGE_NAME" "" "$2" || true
+                dkms_built=1
+                break
+            fi
+        done
+
+        if [ "$dkms_built" -eq 0 ] && command -v dkms >/dev/null 2>&1; then
+            dkms add -m "$NAME" -v "$VERSION" >/dev/null 2>&1 || true
+            dkms build -m "$NAME" -v "$VERSION" || true
+            dkms install -m "$NAME" -v "$VERSION" --force || true
+        fi
+
+        # Reload systemd and enable/start service
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl --system daemon-reload >/dev/null 2>&1 || true
+            systemctl enable linuwu_sense.service >/dev/null 2>&1 || true
+            systemctl start linuwu_sense.service >/dev/null 2>&1 || true
+        fi
+
+        # Apply tmpfiles permissions
+        if command -v systemd-tmpfiles >/dev/null 2>&1; then
+            systemd-tmpfiles --create /usr/lib/tmpfiles.d/linuwu_sense.conf >/dev/null 2>&1 || true
+        fi
+
+        # Attempt to load the module
+        if command -v modprobe >/dev/null 2>&1; then
+            modprobe -r acer_wmi >/dev/null 2>&1 || true
+            modprobe "$MODULE" >/dev/null 2>&1 || true
+        fi
+    ;;
+esac
+
+exit 0
