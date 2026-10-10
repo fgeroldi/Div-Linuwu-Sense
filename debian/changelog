@@ -1,0 +1,12 @@
+linuwu-sense (1.0-2) unstable; urgency=medium
+
+  * Add DKMS packaging and Debian/Ubuntu .deb package support.
+  * Add GitHub Actions CI workflow to build .deb packages.
+
+ -- Felipe Geroldi <142124821+fgeroldi@users.noreply.github.com>  Sat, 10 Oct 2026 12:00:00 -0300
+
+linuwu-sense (1.0-1) unstable; urgency=medium
+
+  * Initial release for Debian/Ubuntu with DKMS.
+
+ -- Felipe Geroldi <142124821+fgeroldi@users.noreply.github.com>  Fri, 18 Sep 2026 14:00:00 -0300

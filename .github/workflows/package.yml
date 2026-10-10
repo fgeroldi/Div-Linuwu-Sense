@@ -1,0 +1,83 @@
+name: Package and CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    name: Build Debian/Ubuntu Package (.deb)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dkms dpkg-dev linux-headers-generic
+
+      - name: Build .deb package
+        run: |
+          make deb
+
+      - name: Test DKMS installation
+        run: |
+          sudo dpkg -i debbuild/linuwu-sense-dkms_*.deb || sudo apt-get install -f -y
+          dkms status -m linuwu-sense
+
+      - name: Upload .deb package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linuwu-sense-dkms-deb
+          path: debbuild/*.deb
+          if-no-files-found: error
+
+      - name: Upload .deb to GitHub Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} debbuild/*.deb --clobber
+
+  build-rpm:
+    name: Build Fedora/RHEL Packages (Akmod/RPM)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install RPM build dependencies
+        run: |
+          dnf install -y make gcc elfutils-libelf-devel rpm-build kmodtool tar gzip findutils
+
+      - name: Build Akmod and Common RPMs
+        run: |
+          make akmod
+
+      - name: Upload RPM package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linuwu-sense-rpm
+          path: rpmbuild/RPMS/*/*.rpm
+          if-no-files-found: error
+
+      - name: Upload RPMs to GitHub Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dnf install -y gh
+          gh release upload ${{ github.event.release.tag_name }} rpmbuild/RPMS/*/*.rpm --clobber
